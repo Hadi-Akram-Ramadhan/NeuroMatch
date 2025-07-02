@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import axios from "axios";
 
 const API_URL = "http://localhost:8000/api";
+axios.defaults.headers.common['Accept'] = 'application/json';
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -16,12 +17,13 @@ export const useAuthStore = defineStore("auth", {
       this.error = "";
       try {
         const res = await axios.post(`${API_URL}/login`, { email, password });
-        this.token = res.data.token;
+        this.token = res.data.access_token;
+        this.user = res.data.user;
         localStorage.setItem("token", this.token);
         axios.defaults.headers.common["Authorization"] = `Bearer ${this.token}`;
         this.error = "";
       } catch (e: any) {
-        this.error = "Login failed";
+        this.error = e.response?.data?.message || e.response?.data?.errors?.email?.[0] || "Login failed";
       } finally {
         this.loading = false;
       }
@@ -35,12 +37,13 @@ export const useAuthStore = defineStore("auth", {
           email,
           password,
         });
-        this.token = res.data.token;
+        this.token = res.data.access_token;
+        this.user = res.data.user;
         localStorage.setItem("token", this.token);
         axios.defaults.headers.common["Authorization"] = `Bearer ${this.token}`;
         this.error = "";
       } catch (e: any) {
-        this.error = "Registration failed";
+        this.error = e.response?.data?.message || Object.values(e.response?.data?.errors || {})[0]?.[0] || "Registration failed";
       } finally {
         this.loading = false;
       }
