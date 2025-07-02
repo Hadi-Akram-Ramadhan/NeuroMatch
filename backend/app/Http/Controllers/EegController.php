@@ -16,11 +16,11 @@ class EegController extends Controller
     public function upload(Request $request)
     {
         $request->validate([
-            'eeg_file' => 'required|file|mimes:csv,txt|max:10240', // 10MB max
+            'eeg' => 'required|file|mimes:csv,txt|max:10240', // 10MB max
         ]);
 
         try {
-            $file = $request->file('eeg_file');
+            $file = $request->file('eeg');
             $user = $request->user();
 
             // Read CSV file
