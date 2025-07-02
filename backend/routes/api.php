@@ -31,4 +31,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/eeg', [EegController::class, 'index']);
     Route::get('/eeg/latest', [EegController::class, 'latest']);
     Route::get('/eeg/profile', [EegController::class, 'profile']);
+    Route::get('/match', [EegController::class, 'match']);
 });

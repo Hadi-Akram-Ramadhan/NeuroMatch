@@ -159,4 +159,27 @@ class EegController extends Controller
             'personality' => $profile->personality
         ]);
     }
+
+    /**
+     * Get random user matches (demo)
+     */
+    public function match(Request $request)
+    {
+        $user = $request->user();
+        $matches = \App\Models\User::where('id', '!=', $user->id)
+            ->inRandomOrder()
+            ->limit(3)
+            ->get()
+            ->map(function($u) {
+                $profile = \App\Models\UserProfile::where('user_id', $u->id)->first();
+                return [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'email' => $u->email,
+                    'mood' => $profile->mood ?? null,
+                    'personality' => $profile->personality ?? null,
+                ];
+            });
+        return response()->json(['matches' => $matches]);
+    }
 }
