@@ -1,8 +1,5 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler
 import random
 import json
 from datetime import datetime
