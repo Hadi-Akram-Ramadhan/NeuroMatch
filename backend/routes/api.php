@@ -30,4 +30,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/eeg/upload', [EegController::class, 'upload']);
     Route::get('/eeg', [EegController::class, 'index']);
     Route::get('/eeg/latest', [EegController::class, 'latest']);
+    Route::get('/eeg/profile', [EegController::class, 'profile']);
 });

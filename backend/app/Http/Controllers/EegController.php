@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\EegData;
 use Illuminate\Support\Facades\Storage;
+use App\Models\UserProfile;
+use Illuminate\Support\Facades\Http;
 
 class EegController extends Controller
 {
@@ -52,9 +54,45 @@ class EegController extends Controller
             // Store EEG data in batches
             EegData::insert($eegRecords);
 
+            // Get the latest EEG record for this user
+            $latestEeg = EegData::where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Call the ML service
+            $mlResponse = Http::post('http://127.0.0.1:5000/predict', [
+                'eeg_data' => [
+                    'alpha' => $latestEeg->alpha,
+                    'beta' => $latestEeg->beta,
+                    'gamma' => $latestEeg->gamma,
+                    'theta' => $latestEeg->theta,
+                    'delta' => $latestEeg->delta,
+                ]
+            ]);
+
+            if ($mlResponse->failed()) {
+                return response()->json([
+                    'message' => 'EEG data uploaded, but ML service failed',
+                    'ml_error' => $mlResponse->body()
+                ], 202);
+            }
+
+            $mlData = $mlResponse->json();
+
+            // Store mood and personality in user_profiles
+            UserProfile::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'mood' => $mlData['mood']['prediction'] ?? null,
+                    'personality' => $mlData['personality']['traits'] ?? null,
+                ]
+            );
+
             return response()->json([
-                'message' => 'EEG data uploaded successfully',
-                'records_count' => count($eegRecords)
+                'message' => 'EEG data uploaded and analyzed successfully',
+                'records_count' => count($eegRecords),
+                'mood' => $mlData['mood']['prediction'] ?? null,
+                'personality' => $mlData['personality']['traits'] ?? null
             ], 201);
 
         } catch (\Exception $e) {
@@ -101,6 +139,24 @@ class EegController extends Controller
 
         return response()->json([
             'latest_eeg' => $latestEeg
+        ]);
+    }
+
+    /**
+     * Get user's latest mood and personality
+     */
+    public function profile(Request $request)
+    {
+        $user = $request->user();
+        $profile = UserProfile::where('user_id', $user->id)->first();
+        if (!$profile) {
+            return response()->json([
+                'message' => 'No profile data found for this user'
+            ], 404);
+        }
+        return response()->json([
+            'mood' => $profile->mood,
+            'personality' => $profile->personality
         ]);
     }
 }
