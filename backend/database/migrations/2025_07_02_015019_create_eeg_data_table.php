@@ -13,7 +13,16 @@ return new class extends Migration
     {
         Schema::create('eeg_data', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->float('alpha');
+            $table->float('beta');
+            $table->float('gamma');
+            $table->float('theta');
+            $table->float('delta');
+            $table->timestamp('timestamp');
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
